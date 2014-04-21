@@ -40,7 +40,7 @@ class UnityTestRunnerGenerator
 
     #pull required data from source file
     source = File.read(input_file)
-    source = source.force_encoding("ISO-8859-1").encode("utf-8", replace: nil) if ($QUICK_RUBY_VERSION > 10900)
+    source = source.force_encoding("ISO-8859-1").encode("utf-8", :replace => nil) if ($QUICK_RUBY_VERSION > 10900)
     tests               = find_tests(source)
     testfile_includes   = find_includes(source)
     used_mocks          = find_mocks(testfile_includes)
@@ -230,21 +230,21 @@ class UnityTestRunnerGenerator
     output.puts("  Unity.CurrentTestName = #TestFunc#{va_args2.empty? ? '' : " \"(\" ##{va_args2} \")\""}; \\")
     output.puts("  Unity.CurrentTestLineNumber = TestLineNum; \\")
     output.puts("  Unity.NumberOfTests++; \\")
+    output.puts("  CMock_Init(); \\") unless (used_mocks.empty?)
     output.puts("  if (TEST_PROTECT()) \\")
     output.puts("  { \\")
     output.puts("    CEXCEPTION_T e; \\") if cexception
     output.puts("    Try { \\") if cexception
-    output.puts("      CMock_Init(); \\") unless (used_mocks.empty?)
     output.puts("      setUp(); \\")
     output.puts("      TestFunc(#{va_args2}); \\")
-    output.puts("      CMock_Verify(); \\") unless (used_mocks.empty?)
     output.puts("    } Catch(e) { TEST_ASSERT_EQUAL_HEX32_MESSAGE(CEXCEPTION_NONE, e, \"Unhandled Exception!\"); } \\") if cexception
     output.puts("  } \\")
-    output.puts("  CMock_Destroy(); \\") unless (used_mocks.empty?)
     output.puts("  if (TEST_PROTECT() && !TEST_IS_IGNORED) \\")
     output.puts("  { \\")
     output.puts("    tearDown(); \\")
+    output.puts("    CMock_Verify(); \\") unless (used_mocks.empty?)
     output.puts("  } \\")
+    output.puts("  CMock_Destroy(); \\") unless (used_mocks.empty?)
     output.puts("  UnityConcludeTest(); \\")
     output.puts("}\n")
   end
